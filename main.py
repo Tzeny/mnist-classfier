@@ -10,12 +10,12 @@ from keras.datasets import mnist
 import time
 from datetime import datetime
 
-max_epoch=10
-date = time.strftime('%Y-%m-%d-%H:%M')
 
-global_scores = []
-global_loss = []
-global_time = []
+max_epoch=50
+optimizer='adam'
+
+#will be used to give all   
+date = time.strftime('%Y-%m-%d-%H:%M')
 
 #load dataset
 (x_train, y_train), (x_test, y_test) = mnist.load_data()
@@ -35,54 +35,40 @@ y_train_labels = keras.utils.to_categorical(y_train, num_classes=10)
 y_test_labels = keras.utils.to_categorical(y_test, num_classes=10)
 
 model = Sequential([
-    Dense(28, input_shape=(784,)),
+    Dense(64, input_shape=(784,)),
     Activation('sigmoid'),
     Dense(10),
     Activation('softmax'),
 ])
 
-model.compile(loss='categorical_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
+model.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=['accuracy'])
 
-plot_model(model, to_file=date+'_model.png',  show_shapes=True)
+plot_model(model, to_file="models-png/" + date + '_model.png',  show_shapes=True)
 
-highest_score = 0
-start = datetime.now()
-#train one epoch and evaluate the model
-for i in range(0,max_epoch):
-    print("Epoch {}/{}".format(i,max_epoch))
-    model.fit(x_train, y_train_labels, verbose=1, epochs=1, batch_size=1)
-    scores  = model.evaluate(x_test, y_test_labels)
-
-    print(model.metrics_names)
-    print("%s: %.2f%%" % (model.metrics_names[1], scores[1]*100))
-    
-    if scores[1]*100 > highest_score:
-        highest_score = scores[1]*100
-    global_scores.append(scores[1]*100)
-    global_loss.append(scores[0]*100)
-    
-    delta = datetime.now() - start
-    global_time.append(delta.total_seconds()/60)
-        
-print("Best score: " + str(highest_score))
+history = model.fit(x_train, y_train_labels, validation_data=(x_test, y_test_labels), epochs=max_epoch, verbose=1)
 
 #save model
-
-model.save_weights("models/" + date + ".h5")
+model.save_weights("models/" + optimizer + "_opt-" + str(max_epoch) + "_eps-" + date + ".h5")
 print("Saved model to disk")
 
 #plot data
 
-x = [l for l in range(0,max_epoch)]
+# list all data in history
+print(history.history.keys())
 
-line_acc, = plt.plot(global_scores, label='Accuracy (%)')
-line_loss, = plt.plot(global_loss, label='Loss')
-line_time, = plt.plot(global_time, label='Time (min)')
-plt.legend(handles=[line_acc, line_loss, line_time])
+# summarize history for accuracy
+plt.plot(history.history['acc'])
+plt.plot(history.history['val_acc'])
+plt.plot(history.history['loss'])
+plt.plot(history.history['val_loss'])
 
-#plt.plot(x, global_scores, global_loss)
+plt.axhline(y=1, color='g', linestyle='--')
+plt.axhline(y=0.9, color='g', linestyle='--')
 
-plt.xlabel('Epoch')
-plt.text(0,0,'Max epochs ' + str(max_epoch) + ';' + date, fontsize=6)
+plt.title('model - accuracy and loss')
+plt.ylabel('accuracy/loss')
+plt.xlabel('epoch')
+plt.legend(['train_acc', 'test_acc', 'train_loss', 'val_loss'], loc='upper left')
 
-plt.savefig(date+'_score.png', bbox_inches='tight')
+plt.savefig(optimizer + "_opt-" + str(max_epoch) + "_eps-" + date +'_score.png', bbox_inches='tight')
+print("Saved plot to disk")
