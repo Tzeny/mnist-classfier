@@ -3,7 +3,7 @@ import numpy as np
 
 import keras
 from keras.models import Sequential
-from keras.layers.core import Dense, Activation
+from keras.layers.core import Dense, Activation, Dropout
 from keras.utils import plot_model
 from keras.datasets import mnist
 
@@ -13,7 +13,8 @@ from datetime import datetime
 
 max_epoch=50
 optimizer='adam'
-
+dropout_ratio = 0.2
+neurons_in_layers = 64
 #will be used to give all   
 date = time.strftime('%Y-%m-%d-%H:%M')
 
@@ -35,8 +36,17 @@ y_train_labels = keras.utils.to_categorical(y_train, num_classes=10)
 y_test_labels = keras.utils.to_categorical(y_test, num_classes=10)
 
 model = Sequential([
-    Dense(64, input_shape=(784,)),
-    Activation('sigmoid'),
+    Dense(neurons_in_layers, input_shape=(784,)),
+    Activation('relu'),
+    Dense(neurons_in_layers),
+    Activation('relu'),
+    Dense(neurons_in_layers),
+    Activation('relu'),
+    Dense(neurons_in_layers),
+    Activation('relu'),
+    Dense(neurons_in_layers),
+    Activation('relu'),
+    Dropout(dropout_ratio),
     Dense(10),
     Activation('softmax'),
 ])
@@ -62,8 +72,10 @@ plt.plot(history.history['val_acc'])
 plt.plot(history.history['loss'])
 plt.plot(history.history['val_loss'])
 
+# plot 3 so that we can better see our model's accuracy
 plt.axhline(y=1, color='g', linestyle='--')
-plt.axhline(y=0.9, color='g', linestyle='--')
+plt.axhline(y=0.95, color='orange', linestyle='--')
+plt.axhline(y=0.9, color='r', linestyle='--')
 
 plt.title('model - accuracy and loss')
 plt.ylabel('accuracy/loss')
